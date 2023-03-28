@@ -79,13 +79,33 @@ async function setJobTitles(company, town, page) {
 async function gettingJobsArticle(page) {
     try {
         await page.waitForSelector('article');
+        // const checkl= await page.$$('artical')
+        // console.log(jobArticles)
+        let loadedArticles = 0;
         while (true) {
-          const loadmore = await page.waitForSelector('a.hp_search-list-load-more',{timeout:40000});
-          if (!loadmore) break;
-          await loadmore.click();
-          await page.waitForSelector('article:last-of-type');
+            
+            const loadmore = await page.waitForSelector('a.hp_search-list-load-more',{timeout:80000});
+            if (!loadmore) break;
+            try {
+                await loadmore.click();
+                await page.waitForSelector('article:last-of-type');
+                
+                const jobArticles = await page.$$('article');
+                loadedArticles=jobArticles
+                console.log(loadedArticles.length)
+                if (loadedArticles.length>=10) {
+                    break
+                    
+                }
+                
+                
+            } catch (e) {
+                console.log(e.message)
+                
+            }
         }
-        const jobArticles = await page.$$('article',);
+        
+        const jobArticles = await page.$$('article');
         await openingJobArticlesOneByOne(jobArticles, page);
         
     } catch (error) {
@@ -94,6 +114,8 @@ async function gettingJobsArticle(page) {
     }
   }
   
+
+
 
 let emailArray = [];
 async function openingJobArticlesOneByOne(jobArticles, page) {

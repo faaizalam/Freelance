@@ -58,24 +58,7 @@ async function setJobTitles(company, town, page) {
 
   
 
-// async function gettingJobsArticle(page) {
-//     page.waitForSelector('article').then(async () => {
-//         const loadmore=await page.$('a.hp_search-list-load-more')
-//        await loadmore.click()
-//         const jobArticles = await page.$$('article');
-         
-          
-//           if (!loadmore) {
-//             console.log(jobArticles)
-              
-//               await openingJobArticlesOneByOne(jobArticles, page);
-            
-//           }
-      
 
-//     })
-   
-// }
 async function gettingJobsArticle(page) {
     try {
         await page.waitForSelector('article');
@@ -88,12 +71,13 @@ async function gettingJobsArticle(page) {
             if (!loadmore) break;
             try {
                 await loadmore.click();
-                await page.waitForSelector('article:last-of-type');
+                // await page.waitForSelector('article:last-of-type');
+                // await page.waitForFunction(`document.querySelectorAll('article').length > ${loadedArticles}`);
                 
                 const jobArticles = await page.$$('article');
-                loadedArticles=jobArticles
-                console.log(loadedArticles.length)
-                if (loadedArticles.length>=10) {
+                loadedArticles=jobArticles.length
+                // console.log(loadedArticles)
+                if (loadedArticles>=100) {
                     break
                     
                 }
@@ -120,36 +104,54 @@ async function gettingJobsArticle(page) {
 let emailArray = [];
 async function openingJobArticlesOneByOne(jobArticles, page) {
     try {
+        // if (!page.isClosed()) {
+            let op =0
+            for (const iterator of jobArticles) {
+            
+           try {
+               await iterator.click()
+            
+           } catch (error) {
+            console.log(error.message)
+            
+           }
+                
+            
+                
 
-    if (!page.isClosed()) {
+            
+     try {
         
-        for (const iterator of jobArticles) {
-            await iterator.click();
-            // phone_click
-            const ise = await page.waitForSelector('a[data-tracking-type="phone_click"], a[data-tracking-type="email_click"],a[data-tracking-type="web_click"]');
-            if (ise) {
-                
-                
-                
-                const elementText = await page.evaluate(
-                    (element) => element.textContent,
-                    ise
-                    )
-                  
-                    const ComName = await page.waitForSelector('div.hp_headline-larger');
-                    const Comps = await page.evaluate(
-                        (element) => element.textContent,
-                        ComName
-                        )
-                        
+         const ise = await page.waitForSelector('a[data-tracking-type="email_click"], a[data-tracking-type="web_click"], a[data-tracking-type="phone_click"]',{ timeout: 60000 });
+         
+         // const iseone = await page.waitForSelector('a[data-tracking-type="email_click"]');
+           if (ise) {
+               const elementText = await page.evaluate(
+                   (element) => element.textContent,
+                   ise
+                   )
+                   console.log(elementText)
+                   
+                   // hp_headline-larger
+                   // email_click
+                   const ComName = await page.waitForSelector('div.hp_headline-larger');
+                   const Comps = await page.evaluate(
+                       (element) => element.textContent,
+                       ComName
+                       )
+                       // console.log(elementText,"here",Comps)
                        
                        emailArray.push({email:elementText,id:Comps});
-               }
-               else {
-                        console.log('Email or phone element not found');
-                    }
+                     }
+                     
+                 
+     } catch (error) {
+        console.log(error.message)
+        
+     }
+    }
                 
-            }
+            
         
             const workbook=new excel.Workbook()
             const worksheet=workbook.addWorksheet('Emails')
@@ -167,12 +169,9 @@ async function openingJobArticlesOneByOne(jobArticles, page) {
             })
                 
             const data=await workbook.xlsx.writeFile('users.xlsx')
-            if (data) {
-              
-                
-            }
+          
 
-    }
+    // }
             
         } catch (error) {
             if (error.message.includes('Execution context was destroyed')) {
@@ -182,10 +181,16 @@ async function openingJobArticlesOneByOne(jobArticles, page) {
                 await page.waitForNavigation({ waitUntil: "networkidle0" });
             } else {
                 console.log({ message: "Email not found." });
+                return
                
             }
           
         }
     }
+
+
+  
+
+
 
 sessionStart();

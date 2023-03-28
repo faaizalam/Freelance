@@ -1,0 +1,19 @@
+{ 
+  "type":"module",
+  "name": "fiverrprojects",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.3.0",
+    "nodemon": "^2.0.22",
+    "puppeteer": "^19.8.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

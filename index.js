@@ -4,6 +4,7 @@ import puppeteer from "puppeteer"
 const url = "https://www.hogapage.de/jobs/suche";
 const company = "Kellner";
 const town = "deutchlan";
+let ArticlesLimit = 150;
 async function sessionStart() {
 
     const browser = await puppeteer.launch({
@@ -58,26 +59,25 @@ async function setJobTitles(company, town, page) {
 
   
 
-
+let CountArtical=0
 async function gettingJobsArticle(page) {
     try {
         await page.waitForSelector('article');
         // const checkl= await page.$$('artical')
         // console.log(jobArticles)
-        let loadedArticles = 0;
+        
         while (true) {
             
             const loadmore = await page.waitForSelector('a.hp_search-list-load-more',{timeout:80000});
             if (!loadmore) break;
             try {
                 await loadmore.click();
-                // await page.waitForSelector('article:last-of-type');
-                // await page.waitForFunction(`document.querySelectorAll('article').length > ${loadedArticles}`);
+                
                 
                 const jobArticles = await page.$$('article');
-                loadedArticles=jobArticles.length
+                CountArtical=jobArticles.length
                 // console.log(loadedArticles)
-                if (loadedArticles>=100) {
+                if (CountArtical>=ArticlesLimit) {
                     break
                     
                 }
@@ -121,29 +121,37 @@ async function openingJobArticlesOneByOne(jobArticles, page) {
 
             
      try {
-        
-         const ise = await page.waitForSelector('a[data-tracking-type="email_click"], a[data-tracking-type="web_click"], a[data-tracking-type="phone_click"]',{ timeout: 60000 });
+       
+         
+         
          
          // const iseone = await page.waitForSelector('a[data-tracking-type="email_click"]');
-           if (ise) {
-               const elementText = await page.evaluate(
-                   (element) => element.textContent,
-                   ise
-                   )
-                   console.log(elementText)
-                   
-                   // hp_headline-larger
-                   // email_click
-                   const ComName = await page.waitForSelector('div.hp_headline-larger');
-                   const Comps = await page.evaluate(
-                       (element) => element.textContent,
-                       ComName
-                       )
-                       // console.log(elementText,"here",Comps)
-                       
-                       emailArray.push({email:elementText,id:Comps});
-                     }
+         try {
+             const ise = await page.waitForSelector('a[data-tracking-type="email_click"]',{ timeout: 60000 });
+            
+             if (ise) {
+                 const elementText = await page.evaluate(
+                     (element) => element.textContent,
+                     ise
+                     )
+                     console.log(elementText)
                      
+                     // hp_headline-larger
+                     // email_click
+                     const ComName = await page.waitForSelector('div.hp_headline-larger');
+                     const Comps = await page.evaluate(
+                         (element) => element.textContent,
+                         ComName
+                         )
+                         // console.log(elementText,"here",Comps)
+                         
+                         emailArray.push({email:elementText,id:Comps});
+                       }
+                       
+         } catch (error) {
+            console.log("email is no present in current Atrical now moving to next")
+            
+         }
                  
      } catch (error) {
         console.log(error.message)
@@ -156,7 +164,7 @@ async function openingJobArticlesOneByOne(jobArticles, page) {
             const workbook=new excel.Workbook()
             const worksheet=workbook.addWorksheet('Emails')
             worksheet.columns=[
-                {header:'companyNames',key:"id",width:40},
+                {header:'companyNames',key:"id",width:120},
                 {header:'Emails',key:'email',width:80}
             ]
             emailArray.forEach((x)=>{

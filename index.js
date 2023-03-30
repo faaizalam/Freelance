@@ -4,7 +4,7 @@ import puppeteer from "puppeteer"
 const url = "https://www.hogapage.de/jobs/suche";
 const company = "Kellner";
 const town = "deutchlan";
-let ArticlesLimit = 150;
+let ArticlesLimit = 2000;
 async function sessionStart() {
 
     const browser = await puppeteer.launch({
@@ -109,6 +109,7 @@ async function openingJobArticlesOneByOne(jobArticles, page) {
             for (const iterator of jobArticles) {
             
            try {
+            await page.waitForTimeout(2000)
                await iterator.click()
             
            } catch (error) {

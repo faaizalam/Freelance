@@ -9,14 +9,14 @@ async function sessionStart() {
 
     const browser = await puppeteer.launch({
         headless: false,
-        args: ['--start-fullscreen','--window-size=1280,800']
+        args: ['--start-fullscreen']
     });
 
     const page = await browser.newPage();
 
     await page.setViewport({
         width: 1400,
-        height: 700,
+        height: 900,
         deviceScaleFactor: 2,
     });
     try {
@@ -57,47 +57,50 @@ async function setJobTitles(company, town, page) {
 
 
 
-  
 
-let CountArtical=0
+
+let CountArtical = 0
 async function gettingJobsArticle(page) {
     try {
         await page.waitForSelector('article');
         // const checkl= await page.$$('artical')
         // console.log(jobArticles)
-        
+
         while (true) {
-            
-            const loadmore = await page.waitForSelector('a.hp_search-list-load-more',{timeout:80000});
+
+            const loadmore = await page.waitForSelector('a.hp_search-list-load-more', { timeout: 80000 });
             if (!loadmore) break;
             try {
-                await loadmore.click();
-                
-                
-                const jobArticles = await page.$$('article');
-                CountArtical=jobArticles.length
+               await  page.waitForTimeout(2000)
+                await loadmore.evaluate((b)=>b.click());
+
+
+                const jobArticles = await page.$$('article', { visible: true }, { clickable: true });
+                console.log(jobArticles.length + " " + "is the total artical to find emails...")
+                CountArtical = jobArticles.length
                 // console.log(loadedArticles)
-                if (CountArtical>=ArticlesLimit) {
-                    break
+                if (CountArtical >= ArticlesLimit) {
                     
+                    break
+
                 }
-                
-                
+
+
             } catch (e) {
                 console.log(e.message)
-                
+
             }
         }
-        
+
         const jobArticles = await page.$$('article');
         await openingJobArticlesOneByOne(jobArticles, page);
-        
+
     } catch (error) {
         console.log(error)
-        
+
     }
-  }
-  
+}
+
 
 
 
@@ -105,100 +108,86 @@ let emailArray = [];
 async function openingJobArticlesOneByOne(jobArticles, page) {
     try {
         // if (!page.isClosed()) {
-            let op =0
-            for (const iterator of jobArticles) {
-            
-           try {
-            await page.waitForTimeout(2000)
-               await iterator.click()
-            
-           } catch (error) {
-            console.log(error.message)
-            
-           }
-                
-            
-                
+        let op = 0
+        for (const iterator of jobArticles) {
 
-            
-     try {
-       
-         
-         
-         
-         // const iseone = await page.waitForSelector('a[data-tracking-type="email_click"]');
-         try {
-             const ise = await page.waitForSelector('a[data-tracking-type="email_click"]',{ timeout: 60000 });
-            
-             if (ise) {
-                 const elementText = await page.evaluate(
-                     (element) => element.textContent,
-                     ise
-                     )
-                     console.log(elementText)
-                     
-                     // hp_headline-larger
-                     // email_click
-                     const ComName = await page.waitForSelector('div.hp_headline-larger');
-                     const Comps = await page.evaluate(
-                         (element) => element.textContent,
-                         ComName
-                         )
-                         // console.log(elementText,"here",Comps)
-                         
-                         emailArray.push({email:elementText,id:Comps});
-                       }
-                       
-         } catch (error) {
-            console.log("email is no present in current Atrical now moving to next")
-            
-         }
-                 
-     } catch (error) {
-        console.log(error.message)
-        
-     }
-    }
-                
-            
-        
-            const workbook=new excel.Workbook()
-            const worksheet=workbook.addWorksheet('Emails')
-            worksheet.columns=[
-                {header:'companyNames',key:"id",width:120},
-                {header:'Emails',key:'email',width:80}
-            ]
-            emailArray.forEach((x)=>{
-                worksheet.addRow(x)
+            try {
+                await page.waitForTimeout(2000)
+                await iterator.evaluate((b)=>b.click())
 
-            })
-            worksheet.getRow(1).eachCell((cell)=>{
-                cell.font={bold:true}
+            } catch (error) {
+                console.log(error.message,"see")
 
-            })
-                
-            const data=await workbook.xlsx.writeFile('users.xlsx')
-          
-
-    // }
-            
-        } catch (error) {
-            if (error.message.includes('Execution context was destroyed')) {
-                console.log({ message: "Page navigation occurred, reloading page." });
-                await page.reload();
-                // Wait for the page to reload before continuing
-                await page.waitForNavigation({ waitUntil: "networkidle0" });
-            } else {
-                console.log({ message: "Email not found." });
-                return
-               
             }
-          
+            try {
+                const ise = await page.waitForSelector('a[data-tracking-type="email_click"]', { timeout: 60000 });
+
+                if (ise) {
+                    const elementText = await page.evaluate(
+                        (element) => element.textContent,
+                        ise
+                    )
+                    console.log(elementText)
+
+                    // hp_headline-larger
+                    // email_click
+                    const ComName = await page.waitForSelector('div.hp_headline-larger');
+                    const Comps = await page.evaluate(
+                        (element) => element.textContent,
+                        ComName
+                    )
+                    // console.log(elementText,"here",Comps)
+
+                    emailArray.push({ email: elementText, id: Comps });
+                }
+
+            } catch (error) {
+                console.log("email is no present in current Atrical now moving to next")
+
+            }
+
+
         }
+
+
+
+        const workbook = new excel.Workbook()
+        const worksheet = workbook.addWorksheet('Emails')
+        worksheet.columns = [
+            { header: 'companyNames', key: "id", width: 120 },
+            { header: 'Emails', key: 'email', width: 80 }
+        ]
+        emailArray.forEach((x) => {
+            worksheet.addRow(x)
+
+        })
+        worksheet.getRow(1).eachCell((cell) => {
+            cell.font = { bold: true }
+
+        })
+
+        const data = await workbook.xlsx.writeFile('users.xlsx')
+
+
+        // }
+
+    } catch (error) {
+        if (error.message.includes('Execution context was destroyed')) {
+            console.log({ message: "Page navigation occurred, reloading page." });
+            await page.reload();
+            // Wait for the page to reload before continuing
+            await page.waitForNavigation({ waitUntil: "networkidle0" });
+        } else {
+            console.log({ message: "Email not found." });
+            return
+
+        }
+
     }
+}
 
 
-  
+
 
 
 
